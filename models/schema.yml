@@ -1,0 +1,77 @@
+version: 1
+
+models:
+  - name: model_processed_data
+    description: One record per page view, user_id contains value if authenticated
+    columns:
+      - name: pageview_id
+        description: Primary key
+        tests:
+          - unique
+          - not_null
+      - name: timestamp
+        description: Page view timestamp
+        tests:
+          - not_null
+      - name: user_id
+        description: Not NULL if user has authenticated
+      - name: anonymous_id
+        description: ID to be used if the user is not yet authenticated
+        tests:
+          - not_null
+      - name: concat_id
+        description: Combined user_id and anonymous_id
+        tests:
+          - not_null
+      - name: session_id
+        description: Session identifier. relative to the user
+        tests:
+          - not_null
+
+  - name: model_unique_visitors
+    description: Contains the amount of unique visitors in the data
+    columns:
+      - name: count_visitor
+        description: Count of unique visitors
+        tests:
+          - not_null
+
+  - name: model_unique_sessions
+    description: Contains the amount of unique sessions in the data
+    columns:
+      - name: count_sessions
+        description: Count of unique sessions
+        tests:
+          - not_null
+
+  - name: model_unique_page_views
+    description: Contains the amount of unique page views in the data
+    columns:
+      - name: count_views
+        description: Count of unique page views
+        tests:
+          - not_null
+
+  - name: model_avg_session_duration
+    description: Contains the average session duration in the data
+    columns:
+      - name: avg_session_duration
+        description: Average session duration
+        tests:
+          - not_null
+
+  - name: model_avg_sessions_per_visitor
+    description: Contains the average sessions per visitor in the data
+    columns:
+      - name: avg_sessions_per_visitor
+        description: Average sessions per visitor
+        tests:
+          - not_null
+
+  - name: model_avg_page_views_per_visitor
+    description: Contains the average page views per visitor in the data
+    columns:
+      - name: avg_page_views_per_visitor
+        description: Average page views per visitor
+        tests:
+          - not_null
