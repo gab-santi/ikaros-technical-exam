@@ -1,4 +1,10 @@
 -- do all data preprocessing here
+-- steps done:
+-- 1. get distinct rows
+-- 2. get latest user_id for each anonymous_id and assign to each row
+-- 3. add pageview_id to identify page views
+-- 4. add session_id to identify user sessions
+
 -- get distinct rows
 WITH data_distinct AS (
     SELECT 
