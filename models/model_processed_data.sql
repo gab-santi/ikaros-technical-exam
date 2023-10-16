@@ -1,5 +1,5 @@
 -- do all data preprocessing here
--- get distinct values
+-- get distinct rows
 WITH data_distinct AS (
     SELECT 
         DISTINCT 
@@ -8,6 +8,20 @@ WITH data_distinct AS (
             ,anonymous_id
         FROM IKAROS.IKAROS_SCHEMA.PAGES
         ORDER BY timestamp ASC
+),
+-- session id generation
+-- session: successive page views
+-- if 30 mins have passed without activity, current session will be ended and a new one will be spawned
+anon_id_with_session AS (
+    SELECT
+        anonymous_id
+        ,timestamp
+        ,1 + sum(IFF(DATEDIFF('minute', lag, timestamp) > 30, 1, 0)) over ( partition by anonymous_id order by timestamp ) as session_id
+    FROM (
+        SELECT *,
+            lag(timestamp) over ( partition by anonymous_id order by timestamp ) lag -- previous row event_time
+        FROM data_distinct
+    )
 ),
 -- anonymous_id with max timestamp
 anon_id_max_timestamp AS (
@@ -28,7 +42,7 @@ anon_id_with_latest_user_id AS (
     ON t1.anonymous_id = t2.anonymous_id
     AND t1.max_timestamp = t2.timestamp
 ),
--- rebuild inital data with new timestamp
+-- rebuild inital data latest new user_id
 data_with_latest_user_id AS (
     SELECT 
         t1.timestamp AS timestamp
@@ -38,8 +52,8 @@ data_with_latest_user_id AS (
     LEFT JOIN anon_id_with_latest_user_id t2
     ON t1.anonymous_id = t2.anonymous_id
 ),
--- distinct data with ID
-data_distinct_with_ids AS (
+-- distinct data with pageview_id with latest user_id
+data_distinct_with_pageview_id AS (
     SELECT
         ROW_NUMBER() OVER (
             ORDER BY timestamp, user_id, anonymous_id
@@ -48,9 +62,21 @@ data_distinct_with_ids AS (
         ,user_id
         ,anonymous_id
         ,CONCAT(COALESCE(user_id, 'NULL'),'_', COALESCE(anonymous_id, 'NULL')) AS concat_id
-        -- TODO add session ID
-        
     FROM data_with_latest_user_id
+),
+-- add session_id
+data_distinct_with_session_id AS (
+    SELECT
+        t1.pageview_id
+        ,t1.timestamp
+        ,t1.user_id
+        ,t1.anonymous_id
+        ,t1.concat_id
+        ,t2.session_id
+    FROM data_distinct_with_pageview_id t1
+    LEFT JOIN anon_id_with_session t2
+    ON t1.timestamp = t2.timestamp
+    AND t2.anonymous_id = t2.anonymous_id
 )
 
 SELECT
@@ -59,5 +85,6 @@ SELECT
     ,user_id
     ,anonymous_id
     ,concat_id
-FROM data_distinct_with_ids
-ORDER BY pageview_id
+    ,session_id
+FROM data_distinct_with_session_id
+ORDER BY anonymous_id, session_id
