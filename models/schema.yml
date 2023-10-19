@@ -19,8 +19,8 @@ models:
         description: ID to be used if the user is not yet authenticated
         tests:
           - not_null
-      - name: concat_id
-        description: Combined user_id and anonymous_id
+      - name: final_id
+        description: Latest user_id if available, anonymous_id if not
         tests:
           - not_null
       - name: session_id

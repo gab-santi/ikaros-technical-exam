@@ -67,7 +67,12 @@ data_distinct_with_pageview_id AS (
         ,timestamp
         ,user_id
         ,anonymous_id
-        ,CONCAT(COALESCE(user_id, 'NULL'),'_', COALESCE(anonymous_id, 'NULL')) AS concat_id
+        --,CONCAT(COALESCE(user_id, 'NULL'),'_', COALESCE(anonymous_id, 'NULL')) AS concat_id
+        ,CASE
+            WHEN user_id IS NULL THEN anonymous_id
+            ELSE user_id
+        END
+        AS final_id
     FROM data_with_latest_user_id
 ),
 -- add session_id
@@ -77,7 +82,7 @@ data_distinct_with_session_id AS (
         ,t1.timestamp
         ,t1.user_id
         ,t1.anonymous_id
-        ,t1.concat_id
+        ,t1.final_id
         ,t2.session_id
     FROM data_distinct_with_pageview_id t1
     LEFT JOIN anon_id_with_session t2
@@ -90,7 +95,7 @@ SELECT
     ,timestamp
     ,user_id
     ,anonymous_id
-    ,concat_id
+    ,final_id
     ,session_id
 FROM data_distinct_with_session_id
 ORDER BY anonymous_id, session_id
