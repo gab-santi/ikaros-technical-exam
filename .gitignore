@@ -5,3 +5,4 @@ logs/
 profiles.yml
 env/
 .user.yml
+.DS_Store
